@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lorran Fraga — IA & Ads para Aquisição de Clientes</title>
+
+  <!-- ✏️ EDITAR: Altere o título acima para seu nome/marca -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       VARIÁVEIS GLOBAIS — edite aqui para mudar toda a paleta
+       ============================================================ */
+    :root {
+      --bg-deep:    #040a14;
+      --bg-mid:     #070f1e;
+      --bg-card:    rgba(255,255,255,0.035);
+      --border:     rgba(100,180,255,0.12);
+      --blue-neon:  #00c8ff;
+      --blue-mid:   #0a84d0;
+      --blue-dark:  #062654;
+      --purple:     #7b5cff;
+      --cyan:       #00e5d0;
+      --text-h:     #e8f4ff;
+      --text-b:     #8badc8;
+      --text-dim:   #4a6a82;
+      --radius:     18px;
+      --shadow-glow: 0 0 40px rgba(0,200,255,0.12);
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-b);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ============================================================
+       CANVAS DE PARTÍCULAS (background animado)
+       ============================================================ */
+    #particles-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* GRID OVERLAY */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* GLOW RADIAL SUPERIOR */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 600px;
+      background: radial-gradient(ellipse at center, rgba(0,150,255,0.10) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       WRAPPER PRINCIPAL
+       ============================================================ */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ============================================================
+       ANIMAÇÕES DE ENTRADA (scroll reveal)
+       ============================================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(.25,.8,.25,1),
+                  transform 0.7s cubic-bezier(.25,.8,.25,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ============================================================
+       HEADER / HERO
+       ============================================================ */
+    .header {
+      text-align: center;
+      padding: 20px 0 48px;
+    }
+
+    /* AVATAR */
+    .avatar-wrap {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .avatar-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--blue-neon) 0deg,
+        var(--purple) 120deg,
+        var(--cyan) 240deg,
+        var(--blue-neon) 360deg
+      );
+      animation: spin 4s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .avatar-inner {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--bg-mid);
+      border: 3px solid var(--bg-deep);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ✏️ EDITAR: troque o src abaixo pela URL da sua foto */
+    .avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Placeholder SVG quando não há foto */
+    .avatar-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue-mid));
+      font-family: 'Syne', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--blue-neon);
+      letter-spacing: -1px;
+    }
+
+    .badge-online {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      background: #00e676;
+      border-radius: 50%;
+      border: 2px solid var(--bg-deep);
+      box-shadow: 0 0 8px rgba(0,230,118,0.6);
+    }
+
+    /* NOME */
+    .hero-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 6vw, 2.6rem);
+      font-weight: 800;
+      color: var(--text-h);
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    /* SUBTÍTULO COM GRADIENTE */
+    .hero-tag {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--blue-neon), var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    /* LINHA COMPLEMENTAR */
+    .hero-sub {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-bottom: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    /* DESCRIÇÃO */
+    .hero-desc {
+      font-size: clamp(0.88rem, 3vw, 0.98rem);
+      line-height: 1.7;
+      color: var(--text-b);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* SEPARADOR DECORATIVO */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 40px 0;
+    }
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .divider-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue-neon);
+      box-shadow: 0 0 10px var(--blue-neon);
+    }
+
+    /* ============================================================
+       BLOCO DE AUTORIDADE — PILLS DE DESTAQUE
+       ============================================================ */
+    .authority-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .authority-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      cursor: default;
+    }
+
+    .authority-card:hover {
+      border-color: rgba(0,200,255,0.3);
+      box-shadow: 0 8px 32px rgba(0,200,255,0.08);
+      transform: translateY(-3px);
+    }
+
+    .authority-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 1px;
+    }
+
+    .authority-text strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-h);
+      margin-bottom: 2px;
+    }
+
+    .authority-text span {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    /* ============================================================
+       LABEL DE SEÇÃO
+       ============================================================ */
+    .section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue-neon);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::before {
+      content: '';
+      width: 20px;
+      height: 2px;
+      background: var(--blue-neon);
+      box-shadow: 0 0 6px var(--blue-neon);
+      border-radius: 2px;
+    }
+
+    /* ============================================================
+       BOTÕES PRINCIPAIS — CARDS CLICÁVEIS
+       ============================================================ */
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    .link-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      text-decoration: none;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: border-color 0.35s, box-shadow 0.35s, transform 0.35s;
+      cursor: pointer;
+    }
+
+    /* SHIMMER NO HOVER */
+    .link-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(0,200,255,0.05) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+    .link-card:hover::before {
+      transform: translateX(100%);
+    }
+
+    .link-card:hover {
+      border-color: rgba(0,200,255,0.28);
+      box-shadow: 0 12px 48px rgba(0,200,255,0.10), var(--shadow-glow);
+      transform: translateY(-4px) scale(1.01);
+    }
+
+    /* ÍCONE DO CARD */
+    .card-icon-wrap {
+      flex-shrink: 0;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-icon-wrap.green  { background: rgba(0,230,118,0.12); box-shadow: 0 0 20px rgba(0,230,118,0.15); }
+    .card-icon-wrap.blue   { background: rgba(0,200,255,0.12); box-shadow: 0 0 20px rgba(0,200,255,0.15); }
+    .card-icon-wrap.purple { background: rgba(123,92,255,0.12); box-shadow: 0 0 20px rgba(123,92,255,0.15); }
+    .card-icon-wrap.cyan   { background: rgba(0,229,208,0.12); box-shadow: 0 0 20px rgba(0,229,208,0.15); }
+
+    /* TEXTO DO CARD */
+    .card-text { flex: 1; position: relative; z-index: 1; }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-h);
+      margin-bottom: 3px;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* SETA DO CARD */
+    .card-arrow {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      transition: border-color 0.3s, color 0.3s, transform 0.3s;
+      position: relative;
+      z-index: 1;
+    }
+    .link-card:hover .card-arrow {
+      border-color: var(--blue-neon);
+      color: var(--blue-neon);
+      transform: translateX(4px);
+    }
+
+    /* BADGE NO CARD */
+    .card-badge {
+      position: absolute;
+      top: 14px;
+      right: 60px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      z-index: 2;
+    }
+    .badge-new {
+      background: rgba(0,230,118,0.15);
+      color: #00e676;
+      border: 1px solid rgba(0,230,118,0.3);
+    }
+    .badge-hot {
+      background: rgba(255,75,75,0.15);
+      color: #ff6b6b;
+      border: 1px solid rgba(255,75,75,0.3);
+    }
+
+    /* ============================================================
+       SEÇÃO DE DIFERENCIAL
+       ============================================================ */
+    .differencial {
+      background: linear-gradient(135deg, rgba(0,50,100,0.35), rgba(30,10,80,0.35));
+      border: 1px solid rgba(100,180,255,0.15);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+    }
+
+    .differencial::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--purple), var(--blue-neon), var(--cyan));
+    }
+
+    .differencial-quote {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(0.95rem, 3vw, 1.15rem);
+      font-weight: 700;
+      color: var(--text-h);
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .differencial-quote em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--blue-neon), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .differencial-bg-text {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 7rem;
+      font-weight: 800;
+      color: rgba(0,200,255,0.04);
+      pointer-events: none;
+      user-select: none;
+      line-height: 1;
+    }
+
+    /* MINI ESTATÍSTICAS */
+    .stats-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item { display: flex; flex-direction: column; gap: 2px; }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--blue-neon), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    /* ============================================================
+       CTA FINAL
+       ============================================================ */
+    .cta-block {
+      text-align: center;
+      padding: 44px 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .cta-block::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue-neon), transparent);
+      opacity: 0.5;
+    }
+
+    .cta-glow {
+      position: absolute;
+      bottom: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 200px;
+      background: radial-gradient(ellipse at center, rgba(0,200,255,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-eyebrow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue-neon);
+      margin-bottom: 12px;
+    }
+
+    .cta-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.4rem, 5vw, 1.9rem);
+      font-weight: 800;
+      color: var(--text-h);
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .cta-sub {
+      font-size: 0.88rem;
+      color: var(--text-b);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* BOTÃO CTA */
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #00c8ff, #0a6fff);
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      padding: 16px 36px;
+      border-radius: 50px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 24px rgba(0,200,255,0.35);
+    }
+
+    .btn-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      transition: opacity 0.3s;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 8px 40px rgba(0,200,255,0.5);
+    }
+
+    .btn-cta:active { transform: scale(0.98); }
+
+    .btn-pulse {
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse-anim 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-anim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.6); }
+    }
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+    }
+
+    .footer p {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    .footer a {
+      color: var(--blue-neon);
+      text-decoration: none;
+      opacity: 0.7;
+    }
+
+    /* ============================================================
+       RESPONSIVIDADE
+       ============================================================ */
+    @media (max-width: 480px) {
+      .wrapper { padding: 28px 16px 60px; }
+
+      .authority-grid { grid-template-columns: 1fr; }
+
+      .stats-row { gap: 20px; }
+
+      .cta-block { padding: 36px 20px; }
+
+      .btn-cta { width: 100%; justify-content: center; }
+    }
+
+    /* SCROLLBAR PERSONALIZADA */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(var(--blue-neon), var(--purple));
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- CANVAS DAS PARTÍCULAS -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ============================================================
+       WRAPPER PRINCIPAL
+       ============================================================ -->
+  <div class="wrapper">
+
+    <!-- ============================================================
+         HEADER / HERO
+         ✏️ EDITAR: nome, subtítulo, descrição e foto abaixo
+         ============================================================ -->
+    <header class="header reveal">
+
+      <!-- AVATAR -->
+      <div class="avatar-wrap">
+        <div class="avatar-ring"></div>
+        <div class="avatar-inner">
+          <!--
+            ✏️ EDITAR FOTO:
+            Opção A — URL externa: substitua o src abaixo pela URL da sua foto
+            Opção B — Arquivo local: coloque o arquivo na mesma pasta e use: src="sua-foto.jpg"
+            Opção C — Manter as iniciais: deixe comentada a tag <img> abaixo
+          -->
+          <!-- <img src="SUA_FOTO_AQUI.jpg" alt="Lorran Fraga" /> -->
+          <div class="avatar-placeholder">LF</div>
+        </div>
+        <div class="badge-online" title="Disponível"></div>
+      </div>
+
+      <!-- ✏️ EDITAR: seu nome -->
+      <h1 class="hero-name">Lorran Fraga</h1>
+
+      <!-- ✏️ EDITAR: seu subtítulo principal -->
+      <p class="hero-tag">IA &amp; Ads para aquisição de clientes</p>
+
+      <!-- ✏️ EDITAR: linha complementar -->
+      <p class="hero-sub">Atendimento inteligente + mais conversão</p>
+
+      <!-- ✏️ EDITAR: descrição curta -->
+      <p class="hero-desc">
+        Ajudo empresas a não perder leads e transformar atendimento em vendas
+        com sistemas inteligentes e estratégias de tráfego.
+      </p>
+
+    </header>
+
+    <!-- DIVISOR DECORATIVO -->
+    <div class="divider reveal reveal-delay-1">
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- ============================================================
+         BLOCO DE AUTORIDADE — CARDS DE DESTAQUE
+         ✏️ EDITAR: textos dos cards abaixo
+         ============================================================ -->
+    <p class="section-label reveal reveal-delay-1">O que eu resolvo</p>
+
+    <div class="authority-grid">
+
+      <div class="authority-card reveal reveal-delay-1">
+        <span class="authority-icon">⚡</span>
+        <div class="authority-text">
+          <!-- ✏️ EDITAR: título e descrição -->
+          <strong>Resposta automática</strong>
+          <span>Nenhum lead fica sem retorno, mesmo fora do horário</span>
+        </div>
+      </div>
+
+      <div class="authority-card reveal reveal-delay-2">
+        <span class="authority-icon">🔁</span>
+        <div class="authority-text">
+          <!-- ✏️ EDITAR: título e descrição -->
+          <strong>Recuperação de contatos</strong>
+          <span>Reativação de quem sumiu sem resposta</span>
+        </div>
+      </div>
+
+      <div class="authority-card reveal reveal-delay-3">
+        <span class="authority-icon">📈</span>
+        <div class="authority-text">
+          <!-- ✏️ EDITAR: título e descrição -->
+          <strong>Aumento de conversão</strong>
+          <span>Mais vendas com o mesmo volume de leads</span>
+        </div>
+      </div>
+
+      <div class="authority-card reveal reveal-delay-4">
+        <span class="authority-icon">🤖</span>
+        <div class="authority-text">
+          <!-- ✏️ EDITAR: título e descrição -->
+          <strong>Atendimento 24h</strong>
+          <span>Sistema inteligente que vende enquanto você dorme</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DIVISOR -->
+    <div class="divider reveal">
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- ============================================================
+         BOTÕES PRINCIPAIS — CARDS CLICÁVEIS
+         ✏️ EDITAR: links (href="#") e textos abaixo
+         ============================================================ -->
+    <p class="section-label reveal">Links rápidos</p>
+
+    <div class="cards-list">
+
+      <!-- CARD 1 — WHATSAPP -->
+      <!--
+        ✏️ EDITAR LINK: substitua # pelo link do seu WhatsApp
+        Exemplo: href="https://wa.me/5511999999999?text=Olá+Lorran"
+      -->
+      <a href="https://wa.me/21999640252" class="link-card reveal reveal-delay-1" target="_blank" rel="noopener">
+        <div class="card-badge badge-hot">Principal</div>
+        <div class="card-icon-wrap green">💬</div>
+        <div class="card-text">
+          <!-- ✏️ EDITAR: título e descrição do card -->
+          <p class="card-title">Fale comigo</p>
+          <p class="card-desc">Entenda como aplicar isso no seu negócio</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <!-- CARD 2 — PORTFÓLIO -->
+      <!--
+        ✏️ EDITAR LINK: substitua # pela URL do seu portfólio
+        Exemplo: href="https://seuportfolio.com"
+      -->
+      <a href="https://app.notion.com/p/Lorran-Fraga-IA-Automa-o-para-Empresas-3812f958b0868056b714c30b16a214ff?source=copy_link" class="link-card reveal reveal-delay-2" target="_blank" rel="noopener">
+        <div class="card-icon-wrap blue">🗂️</div>
+        <div class="card-text">
+          <!-- ✏️ EDITAR: título e descrição do card -->
+          <p class="card-title">Ver projetos</p>
+          <p class="card-desc">Soluções aplicadas na prática</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <!-- CARD 3 — APRESENTAÇÃO / SOLUÇÃO -->
+      <!--
+        ✏️ EDITAR LINK: substitua # pelo link da apresentação ou vídeo explicativo
+        Exemplo: href="https://apresentacao.com" ou href="https://youtu.be/..."
+      -->
+      <a href="https://drive.google.com/file/d/1d-tGSA8KTbbX6FdCSPqUWm8x5SprIfSw/view?usp=sharing" class="link-card reveal reveal-delay-3" target="_blank" rel="noopener">
+        <div class="card-badge badge-new">Novo</div>
+        <div class="card-icon-wrap purple">🚀</div>
+        <div class="card-text">
+          <!-- ✏️ EDITAR: título e descrição do card -->
+          <p class="card-title">Conhecer a solução</p>
+          <p class="card-desc">Como funciona o sistema na prática</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <!-- CARD 4 — INSTAGRAM -->
+      <!--
+        ✏️ EDITAR LINK: substitua # pelo link do seu Instagram
+        Exemplo: href="https://instagram.com/seuuser"
+      -->
+      <a href="https://www.instagram.com/lorranfraga.mkt/" class="link-card reveal reveal-delay-4" target="_blank" rel="noopener">
+        <div class="card-icon-wrap cyan">✨</div>
+        <div class="card-text">
+          <!-- ✏️ EDITAR: título e descrição do card -->
+          <p class="card-title">Conteúdos</p>
+          <p class="card-desc">Insights sobre IA e Ads no dia a dia</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+    </div>
+
+    <!-- ============================================================
+         SEÇÃO DE DIFERENCIAL
+         ✏️ EDITAR: texto de destaque e estatísticas abaixo
+         ============================================================ -->
+    <div class="differencial reveal">
+
+      <div class="differencial-bg-text">IA</div>
+
+      <!-- ✏️ EDITAR: frase de diferencial — o <em> fica destacado em azul -->
+      <p class="differencial-quote">
+        Enquanto a maioria ainda responde manualmente,
+        empresas que utilizam sistemas inteligentes já estão
+        <em>convertendo mais e mais rápido.</em>
+      </p>
+
+
+
+    </div>
+
+    <!-- ============================================================
+         CTA FINAL
+         ✏️ EDITAR: título, subtítulo e link do botão abaixo
+         ============================================================ -->
+    <div class="cta-block reveal">
+
+      <div class="cta-glow"></div>
+
+      <!-- ✏️ EDITAR: eyebrow (texto pequeno acima do título) -->
+      <p class="cta-eyebrow">Próximo passo</p>
+
+      <!-- ✏️ EDITAR: título do CTA -->
+      <h2 class="cta-title">Pronto para não perder<br/>mais leads?</h2>
+
+      <!-- ✏️ EDITAR: subtítulo do CTA -->
+      <p class="cta-sub">
+        Conversa rápida, sem enrolação.<br/>
+        Veja se faz sentido para o seu negócio.
+      </p>
+
+      <!--
+        ✏️ EDITAR LINK: substitua # pelo link do seu WhatsApp
+        Exemplo: href="https://wa.me/5511999999999?text=Quero+saber+mais"
+      -->
+      <a href="https://wa.me/21999640252" class="btn-cta" target="_blank" rel="noopener">
+        <div class="btn-pulse"></div>
+        💬 Falar no WhatsApp
+      </a>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer reveal">
+      <!--
+        ✏️ EDITAR: altere o texto do rodapé conforme necessário
+      -->
+      <p>© 2025 Lorran Fraga · IA & Ads para aquisição de clientes</p>
+    </footer>
+
+  </div><!-- /wrapper -->
+
+
+  <!-- ============================================================
+       JAVASCRIPT — Partículas + Scroll Reveal
+       ============================================================ -->
+  <script>
+    /* ── PARTICLES ENGINE ─────────────────────────────────────── */
+    (function () {
+      const canvas = document.getElementById('particles-canvas');
+      const ctx    = canvas.getContext('2d');
+      let W, H, particles = [];
+
+      const COLORS = ['rgba(0,200,255,', 'rgba(123,92,255,', 'rgba(0,229,208,'];
+      const COUNT  = 55;
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+
+      function randomBetween(a, b) { return a + Math.random() * (b - a); }
+
+      function createParticle() {
+        return {
+          x:     randomBetween(0, W),
+          y:     randomBetween(0, H),
+          r:     randomBetween(0.5, 2.2),
+          vx:    randomBetween(-0.18, 0.18),
+          vy:    randomBetween(-0.18, 0.18),
+          alpha: randomBetween(0.2, 0.7),
+          color: COLORS[Math.floor(Math.random() * COLORS.length)]
+        };
+      }
+
+      function init() {
+        resize();
+        particles = Array.from({ length: COUNT }, createParticle);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        /* Linhas de conexão */
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx   = particles[i].x - particles[j].x;
+            const dy   = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 130) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(0,200,255,${0.06 * (1 - dist / 130)})`;
+              ctx.lineWidth   = 0.7;
+              ctx.stroke();
+            }
+          }
+        }
+
+        /* Pontos */
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = p.color + p.alpha + ')';
+          ctx.fill();
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < -10) p.x = W + 10;
+          if (p.x > W + 10) p.x = -10;
+          if (p.y < -10) p.y = H + 10;
+          if (p.y > H + 10) p.y = -10;
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resize);
+      init();
+      draw();
+    })();
+
+    /* ── SCROLL REVEAL ────────────────────────────────────────── */
+    (function () {
+      const items = document.querySelectorAll('.reveal');
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      /* Primeiro bloco visível imediatamente */
+      items.forEach((el, i) => {
+        if (i < 3) {
+          el.classList.add('visible');
+        } else {
+          io.observe(el);
+        }
+      });
+    })();
+
+    /* ── HOVER DE PROFUNDIDADE NOS LINK-CARDS ─────────────────── */
+    document.querySelectorAll('.link-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x    = (e.clientX - rect.left) / rect.width  - 0.5;
+        const y    = (e.clientY - rect.top)  / rect.height - 0.5;
+        card.style.transform = `translateY(-4px) perspective(600px) rotateY(${x * 6}deg) rotateX(${-y * 4}deg) scale(1.01)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  </script>
+
+</body>
+</html>
